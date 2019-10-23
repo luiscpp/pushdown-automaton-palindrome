@@ -1,5 +1,6 @@
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtGui import QColor,QBrush,QPen,QFont
+import time
 
 class Transition(QtWidgets.QGraphicsItem):
     def __init__(self,start,end):
@@ -29,3 +30,12 @@ class Transition(QtWidgets.QGraphicsItem):
             painter.drawLine(0,25,249,25)
             painter.drawLine(250,25,240,15)
             painter.drawLine(250,25,240,35)
+
+    def changeColor(self):
+        self.color = QtCore.Qt.black
+        
+    def activate(self):
+        self.color = QColor(90,40,55)
+        QtWidgets.QApplication.processEvents() #Para que los eventos tengan preferencia
+        #time.sleep(1)
+        self.color = QtCore.Qt.black     

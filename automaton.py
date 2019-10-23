@@ -1,18 +1,136 @@
 from automaton_ui import *
+import time
 from scene import *
 from state import *
 from transition import *
 from text import *
+from stack import *
+
+ACTUAL_STATE = 0
+NEXT_STATE = 1
+READ = 2
+POP = 3
+PUSH = 4
 
 class Automaton(QtWidgets.QWidget):
     def __init__(self):
         QtWidgets.QWidget.__init__(self)
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
+        self.ui.evaluate.clicked.connect(self.evaluateWord)
         self.transitionMatrix = []
+        self.initializeMatrix()
         self.states = []
         self.transitions = []
+        self.stack = Stack()
+        self.actualState = "p"
+        self.count = 0
         self.initializeAutomatom()
+
+    def getTransition(self,start,end):
+        for i in range(len(self.transitions)):
+            if(self.transitions[i].start == start and self.transitions[i].end == end):
+                return self.transitions[i]
+        return False                
+
+    def getText(self,texts,read,pop,push):
+        for j in range(len(texts)):
+            if(texts[j].read == read and texts[j].pop == pop and texts[j].push == push):
+                return texts[j]
+        return False                
+
+    def getState(self,name):
+        for i in range(len(self.states)):
+            if(self.states[i].name == name):
+                return self.states[i]
+        return False                
+
+    def activateColors(self,start,end,read,pop,push):#HERE
+        transition = self.getTransition(start,end)
+        text = self.getText(transition.transitionsTexts,read,pop,push)
+        state = self.getState(end)
+        
+        text.activate()
+        transition.activate()
+        state.activate()
+
+    '''def activateColors(self,start,end,read,pop,push):
+        for i in range(len(self.transitions)):
+            if(self.transitions[i].start == start and self.transitions[i].end == end):
+                transition = self.transitions[i]
+                for j in range(len(self.transitions[i].transitionsTexts)):
+                    if(self.transitions[i].transitionsTexts[j].read == read and self.transitions[i].transitionsTexts[j].pop == pop and self.transitions[i].transitionsTexts[j].push == push):
+                        self.transitions[i].transitionsTexts[j].activate()
+                        break
+                break                        
+        transition.activate()'''
+        
+    def evaluateTransition(self,actualState,read,pop):
+        row = []
+        for i in range(12):
+            for j in range(5):
+                row.append(self.transitionMatrix[i][j])
+
+            if(row[ACTUAL_STATE] == actualState and row[READ] == read and row[POP] == pop):
+                self.count = self.count -1 
+                print("actual: ",row[ACTUAL_STATE])
+                print("siguiente: ",row[NEXT_STATE])
+                print("lee: ",row[READ])
+                print("saca: ",row[POP])
+                print("mete: ",row[PUSH])
+                self.actualState = row[NEXT_STATE]
+                self.activateColors(row[ACTUAL_STATE],row[NEXT_STATE],row[READ],row[POP],row[PUSH])
+
+                if(row[POP] != 'lambda'):
+                    self.stack.elements.pop()
+                push = row[PUSH]#Caracteres a meter en la pila
+                
+                if(row[PUSH] != 'lambda'):
+                    for k in range(len(push)):
+                        self.stack.elements.append(push[k])
+
+                print("\npila (alreves):\n")
+                for k in range(len(self.stack.elements)):#imprime los elementos de la pila
+                    print("-",self.stack.elements[k])
+                break                 
+            else:
+                row.clear()
+
+    def restart(self):
+        self.stack.restart()
+        self.actualState = "p"
+        self.count = 0
+
+    def evaluateWord(self):
+        self.restart()
+        self.ui.evaluate.setEnabled(False)
+        word = self.ui.input.toPlainText()
+        if((len(word) % 2) == 0):
+            print("La cantidad de caracteres debe ser impar")
+        else:
+            self.count = len(word)
+            for i in range(len(word)):
+                top = self.stack.elements.pop()
+                print("\ntransicion:\n")
+                print("tope:",top)
+                self.stack.elements.append(top)
+                character = word[i]
+                self.evaluateTransition(self.actualState,character,top)
+
+            top = self.stack.elements.pop()
+            self.stack.elements.append(top)
+            
+            if(self.actualState == 'q' and top == '#'):
+                if(self.count == 0):
+                    print("\ntransicion:\n")
+                    print("tope:",top)
+                    self.evaluateTransition('q','lambda','#')
+                    print("ES PALINDROMA")
+                else:
+                    print("NO ES")
+            else:  
+                print("NO ES")
+        self.ui.evaluate.setEnabled(True)                                  
 
     def initializeAutomatom(self):
         self.scene = Scene()
@@ -99,10 +217,11 @@ class Automaton(QtWidgets.QWidget):
         transitionQR = Transition("q","r")
         transitionQR.setPos(596,325)
         text12 = Text("lambda","#","#")
-        text12.setPos(650,295)
+        text12.setPos(650,295)        
+        transitionQR.transitionsTexts.append(text12)
         self.scene.addItem(text12)
         self.scene.addItem(transitionQR)
-        transitionQR.transitionsTexts.append(text12)
+        self.transitions.append(transitionQR)
 
         self.ui.graphicsView.setScene(self.scene)
 
@@ -193,7 +312,8 @@ if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
     widget = Automaton()
-    widget.initializeMatrix()
-    #widget.printMatrix()
+    widget.printMatrix()
     widget.show()
     sys.exit(app.exec_())
+    #time.sleep(5)
+    

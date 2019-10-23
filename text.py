@@ -1,5 +1,6 @@
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtGui import QColor,QBrush,QPen,QFont
+import time
 
 class Text(QtWidgets.QGraphicsItem):
     def __init__(self,read,pop,push):
@@ -28,3 +29,12 @@ class Text(QtWidgets.QGraphicsItem):
             painter.drawText(10,30,self.read+","+self.pop+"/"+'λ')
         else:    
             painter.drawText(10,30,self.read+","+self.pop+"/"+self.push)
+
+    def changeColor(self):
+        self.color = QColor(90,80,20)
+        
+    def activate(self):
+        self.color = QColor(90,40,55)
+        QtWidgets.QApplication.processEvents() #Para que los eventos tengan preferencia
+        #time.sleep(1)
+        self.color = QColor(90,80,20)
