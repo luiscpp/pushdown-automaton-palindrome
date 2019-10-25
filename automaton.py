@@ -17,7 +17,8 @@ class Automaton(QtWidgets.QWidget):
         QtWidgets.QWidget.__init__(self)
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
-        self.ui.evaluate.clicked.connect(self.evaluateWord)
+        self.ui.slowButton.clicked.connect(self.stepByStep)
+        self.ui.fastButton.clicked.connect(self.fast)
         self.transitionMatrix = []
         self.initializeMatrix()
         self.states = []
@@ -45,27 +46,90 @@ class Automaton(QtWidgets.QWidget):
                 return self.states[i]
         return False                
 
-    def activateColors(self,start,end,read,pop,push):#HERE
+
+    def pushStack(self,element):
+        rows = self.ui.tableWidget.rowCount()
+        rows = rows+1
+        self.ui.tableWidget.setRowCount(rows)
+
+        item = QtWidgets.QTableWidgetItem()
+        self.ui.tableWidget.setVerticalHeaderItem(rows-1, item) 
+
+        item = QtWidgets.QTableWidgetItem()
+        item.setTextAlignment(QtCore.Qt.AlignCenter)
+        self.ui.tableWidget.setItem(rows-1, 0, item)
+
+        _translate = QtCore.QCoreApplication.translate
+
+        item = self.ui.tableWidget.item(rows-1, 0)
+        item.setText(_translate("Widget", element))
+
+        e=[]
+        max = rows-1
+
+        e.append(self.ui.tableWidget.item(max, 0).text())
+
+        for i in range(max):
+            e.append(self.ui.tableWidget.item(i, 0).text())
+
+        for i in range(rows):
+            item = self.ui.tableWidget.item(i, 0) 
+            font = QtGui.QFont()
+            font.setPointSize(23)
+            item.setFont(font) 
+            item.setText(_translate("Widget", e[i]))
+
+
+    def popStack(self):        
+        rowsBefore = self.ui.tableWidget.rowCount()
+        rowAfter = rowsBefore-1
+        e = []
+        for i in range(1,rowsBefore):
+            e.append(self.ui.tableWidget.item(i, 0).text())
+
+        self.ui.tableWidget.setRowCount(rowAfter) 
+        _translate = QtCore.QCoreApplication.translate
+
+        for i in range(rowAfter):
+            item = self.ui.tableWidget.item(i, 0)  
+            font = QtGui.QFont()
+            font.setPointSize(23)
+            item.setFont(font)
+            item.setText(_translate("Form", e[i]))
+
+    def restart(self):
+        self.ui.tableWidget.setRowCount(1)
+        _translate = QtCore.QCoreApplication.translate
+        item = self.ui.tableWidget.item(0, 0)
+        font = QtGui.QFont()
+        font.setPointSize(23)
+        item.setFont(font)
+        item.setText(_translate("Widget", "#"))#SOLUCIONAR QUE SE VEA LA PILA CON SOLO EL #
+    
+        self.ui.arrowLabel.setGeometry(QtCore.QRect(146, 397, 71, 61))#Indica el estado P
+        self.stack = Stack()
+        self.actualState = "p"
+        self.count = 0
+        
+
+    def activateColorsSlow(self,start,end,read,pop,push):#HERE
         transition = self.getTransition(start,end)
         text = self.getText(transition.transitionsTexts,read,pop,push)
         state = self.getState(end)
         
-        text.activate()
-        transition.activate()
-        state.activate()
+        text.activateSlow()
+        transition.activateSlow()
 
-    '''def activateColors(self,start,end,read,pop,push):
-        for i in range(len(self.transitions)):
-            if(self.transitions[i].start == start and self.transitions[i].end == end):
-                transition = self.transitions[i]
-                for j in range(len(self.transitions[i].transitionsTexts)):
-                    if(self.transitions[i].transitionsTexts[j].read == read and self.transitions[i].transitionsTexts[j].pop == pop and self.transitions[i].transitionsTexts[j].push == push):
-                        self.transitions[i].transitionsTexts[j].activate()
-                        break
-                break                        
-        transition.activate()'''
-        
-    def evaluateTransition(self,actualState,read,pop):
+        if(self.actualState == 'p'):
+            self.ui.arrowLabel.setGeometry(QtCore.QRect(146, 397, 71, 61))
+        elif(self.actualState == 'q'):
+            self.ui.arrowLabel.setGeometry(QtCore.QRect(507, 397, 71, 61))
+        else:
+            self.ui.arrowLabel.setGeometry(QtCore.QRect(868, 397, 71, 61))
+
+        state.activateSlow()
+
+    def evaluateTransitionSlow(self,actualState,read,pop):
         row = []
         for i in range(12):
             for j in range(5):
@@ -79,58 +143,197 @@ class Automaton(QtWidgets.QWidget):
                 print("saca: ",row[POP])
                 print("mete: ",row[PUSH])
                 self.actualState = row[NEXT_STATE]
-                self.activateColors(row[ACTUAL_STATE],row[NEXT_STATE],row[READ],row[POP],row[PUSH])
 
                 if(row[POP] != 'lambda'):
                     self.stack.elements.pop()
+                    self.popStack() #Sacar el tope de la pila grafica
                 push = row[PUSH]#Caracteres a meter en la pila
                 
                 if(row[PUSH] != 'lambda'):
                     for k in range(len(push)):
                         self.stack.elements.append(push[k])
+                        self.pushStack(push[k])                   
+
+                self.activateColorsSlow(row[ACTUAL_STATE],row[NEXT_STATE],row[READ],row[POP],row[PUSH])                        
 
                 print("\npila (alreves):\n")
                 for k in range(len(self.stack.elements)):#imprime los elementos de la pila
                     print("-",self.stack.elements[k])
                 break                 
             else:
-                row.clear()
+                row.clear() 
 
-    def restart(self):
-        self.stack.restart()
-        self.actualState = "p"
-        self.count = 0
+    def isValidateString(self,word):
+        for i in range(len(word)):
+            if(word[i] != 'a' and word[i] != 'b' and word[i] != 'c'):
+                return False
+        return True                
 
-    def evaluateWord(self):
+
+    def stepByStep(self):
         self.restart()
-        self.ui.evaluate.setEnabled(False)
-        word = self.ui.input.toPlainText()
-        if((len(word) % 2) == 0):
-            print("La cantidad de caracteres debe ser impar")
-        else:
-            self.count = len(word)
-            for i in range(len(word)):
-                top = self.stack.elements.pop()
-                print("\ntransicion:\n")
-                print("tope:",top)
-                self.stack.elements.append(top)
-                character = word[i]
-                self.evaluateTransition(self.actualState,character,top)
+        self.ui.slowButton.setEnabled(False)
+        self.ui.fastButton.setEnabled(False) 
 
-            top = self.stack.elements.pop()
-            self.stack.elements.append(top)
-            
-            if(self.actualState == 'q' and top == '#'):
-                if(self.count == 0):
+        word = self.ui.input.toPlainText()
+        word = word.lower() #Para aceptar entradas en mayusculas
+
+        if(self.isValidateString(word)):
+            if((len(word) % 2) == 0):
+                self.ui.resultLabel.setStyleSheet("border:1px solid;font-size:25px;font-style:italic;color:black;background-color:rgb(120,0,0);border-top-right-radius:20px;border-bottom-left-radius:20px;border-top-left-radius:4px;border-bottom-right-radius:4px;")        
+                self.ui.resultLabel.setText("Cadena par")
+                self.ui.resultLabel.setVisible(True)
+                QtCore.QTimer.singleShot(3000, self.ui.resultLabel.hide)
+            else:
+                self.count = len(word)
+                for i in range(len(word)):
+                    top = self.stack.elements.pop()
                     print("\ntransicion:\n")
                     print("tope:",top)
-                    self.evaluateTransition('q','lambda','#')
-                    print("ES PALINDROMA")
-                else:
+                    self.stack.elements.append(top)
+                    character = word[i]
+                    self.evaluateTransitionSlow(self.actualState,character,top)
+
+                top = self.stack.elements.pop()
+                self.stack.elements.append(top)
+                
+                if(self.actualState == 'q' and top == '#'):
+                    if(self.count == 0):
+                        print("\ntransicion:\n")
+                        print("tope:",top)
+                        self.evaluateTransitionSlow('q','lambda','#')
+                        self.ui.resultLabel.setStyleSheet("border:1px solid;font-size:25px;font-style:italic;color:black;background-color:rgb(0,80,30);border-top-right-radius:20px;border-bottom-left-radius:20px;border-top-left-radius:4px;border-bottom-right-radius:4px;")        
+                        self.ui.resultLabel.setText("Palindroma")
+                        self.ui.resultLabel.setVisible(True)
+                        QtCore.QTimer.singleShot(3000, self.ui.resultLabel.hide)
+                        print("ES PALINDROMA")
+                    else:
+                        self.ui.resultLabel.setStyleSheet("border:1px solid;font-size:25px;font-style:italic;color:black;background-color:rgb(120,0,0);border-top-right-radius:20px;border-bottom-left-radius:20px;border-top-left-radius:4px;border-bottom-right-radius:4px;")        
+                        self.ui.resultLabel.setText("No Palindroma")
+                        self.ui.resultLabel.setVisible(True)
+                        QtCore.QTimer.singleShot(3000, self.ui.resultLabel.hide)
+                else:  
+                    self.ui.resultLabel.setStyleSheet("border:1px solid;font-size:25px;font-style:italic;color:black;background-color:rgb(120,0,0);border-top-right-radius:20px;border-bottom-left-radius:20px;border-top-left-radius:4px;border-bottom-right-radius:4px;")        
+                    self.ui.resultLabel.setText("No Palindroma")
+                    self.ui.resultLabel.setVisible(True)
+                    QtCore.QTimer.singleShot(3000, self.ui.resultLabel.hide)
+        else:
+            self.ui.resultLabel.setStyleSheet("border:1px solid;font-size:25px;font-style:italic;color:black;background-color:rgb(120,0,0);border-top-right-radius:20px;border-bottom-left-radius:20px;border-top-left-radius:4px;border-bottom-right-radius:4px;")        
+            self.ui.resultLabel.setText("Invalido")
+            self.ui.resultLabel.setVisible(True)
+            QtCore.QTimer.singleShot(3000, self.ui.resultLabel.hide)
+        self.ui.slowButton.setEnabled(True) 
+        self.ui.fastButton.setEnabled(True) 
+
+
+    def activateColorsFast(self,start,end,read,pop,push):#HERE
+        transition = self.getTransition(start,end)
+        text = self.getText(transition.transitionsTexts,read,pop,push)
+        state = self.getState(end)
+        
+        text.activateFast()
+        transition.activateFast()
+
+        if(self.actualState == 'p'):
+            self.ui.arrowLabel.setGeometry(QtCore.QRect(146, 397, 71, 61))
+        elif(self.actualState == 'q'):
+            self.ui.arrowLabel.setGeometry(QtCore.QRect(507, 397, 71, 61))
+        else:
+            self.ui.arrowLabel.setGeometry(QtCore.QRect(868, 397, 71, 61))
+
+        state.activateFast()
+
+    def evaluateTransitionFast(self,actualState,read,pop):
+        row = []
+        for i in range(12):
+            for j in range(5):
+                row.append(self.transitionMatrix[i][j])
+
+            if(row[ACTUAL_STATE] == actualState and row[READ] == read and row[POP] == pop):
+                self.count = self.count -1 
+                print("actual: ",row[ACTUAL_STATE])
+                print("siguiente: ",row[NEXT_STATE])
+                print("lee: ",row[READ])
+                print("saca: ",row[POP])
+                print("mete: ",row[PUSH])
+                self.actualState = row[NEXT_STATE]
+                
+                if(row[POP] != 'lambda'):
+                    self.stack.elements.pop()
+                    self.popStack() #Sacar el tope de la pila grafica
+                push = row[PUSH]#Caracteres a meter en la pila
+                
+                if(row[PUSH] != 'lambda'):
+                    for k in range(len(push)):
+                        self.stack.elements.append(push[k])
+                        self.pushStack(push[k])                   
+
+                self.activateColorsFast(row[ACTUAL_STATE],row[NEXT_STATE],row[READ],row[POP],row[PUSH])                        
+
+                print("\npila (alreves):\n")
+                for k in range(len(self.stack.elements)):#imprime los elementos de la pila
+                    print("-",self.stack.elements[k])
+                break                 
+            else:
+                row.clear()           
+
+    def fast(self):
+        self.restart()
+        self.ui.slowButton.setEnabled(False)
+        self.ui.fastButton.setEnabled(False)
+        word = self.ui.input.toPlainText()
+        word = word.lower() #Para aceptar entradas en mayusculas
+
+        if(self.isValidateString(word)):
+            if((len(word) % 2) == 0):
+                self.ui.resultLabel.setStyleSheet("border:1px solid;font-size:25px;font-style:italic;color:black;background-color:rgb(120,0,0);border-top-right-radius:20px;border-bottom-left-radius:20px;border-top-left-radius:4px;border-bottom-right-radius:4px;")        
+                self.ui.resultLabel.setText("Cadena par")
+                self.ui.resultLabel.setVisible(True)
+                QtCore.QTimer.singleShot(3000, self.ui.resultLabel.hide)
+            else:                
+                self.count = len(word)
+                for i in range(len(word)):
+                    top = self.stack.elements.pop()
+                    print("\ntransicion:\n")
+                    print("tope:",top)
+                    self.stack.elements.append(top)
+                    character = word[i]
+                    self.evaluateTransitionFast(self.actualState,character,top)
+
+                top = self.stack.elements.pop()
+                self.stack.elements.append(top)
+                
+                if(self.actualState == 'q' and top == '#'):
+                    if(self.count == 0):
+                        print("\ntransicion:\n")
+                        print("tope:",top)
+                        self.evaluateTransitionFast('q','lambda','#')
+                        self.ui.resultLabel.setStyleSheet("border:1px solid;font-size:25px;font-style:italic;color:black;background-color:rgb(0,80,30);border-top-right-radius:20px;border-bottom-left-radius:20px;border-top-left-radius:4px;border-bottom-right-radius:4px;")        
+                        self.ui.resultLabel.setText("Palindroma")
+                        self.ui.resultLabel.setVisible(True)
+                        QtCore.QTimer.singleShot(3000, self.ui.resultLabel.hide)#espera 1 seg para ejecutar el metodo changeColor
+                        print("ES PALINDROMA")
+                    else:
+                        self.ui.resultLabel.setStyleSheet("border:1px solid;font-size:25px;font-style:italic;color:black;background-color:rgb(120,0,0);border-top-right-radius:20px;border-bottom-left-radius:20px;border-top-left-radius:4px;border-bottom-right-radius:4px;")        
+                        self.ui.resultLabel.setText("No Palindroma")
+                        self.ui.resultLabel.setVisible(True)
+                        QtCore.QTimer.singleShot(3000, self.ui.resultLabel.hide)
+                        print("NO ES")
+                else:  
+                    self.ui.resultLabel.setStyleSheet("border:1px solid;font-size:25px;font-style:italic;color:black;background-color:rgb(120,0,0);border-top-right-radius:20px;border-bottom-left-radius:20px;border-top-left-radius:4px;border-bottom-right-radius:4px;")        
+                    self.ui.resultLabel.setText("No Palindroma")
+                    self.ui.resultLabel.setVisible(True)
+                    QtCore.QTimer.singleShot(3000, self.ui.resultLabel.hide)
                     print("NO ES")
-            else:  
-                print("NO ES")
-        self.ui.evaluate.setEnabled(True)                                  
+        else:
+            self.ui.resultLabel.setStyleSheet("border:1px solid;font-size:25px;font-style:italic;color:black;background-color:rgb(120,0,0);border-top-right-radius:20px;border-bottom-left-radius:20px;border-top-left-radius:4px;border-bottom-right-radius:4px;")        
+            self.ui.resultLabel.setText("Invalido")
+            self.ui.resultLabel.setVisible(True)
+            QtCore.QTimer.singleShot(3000, self.ui.resultLabel.hide)
+
+        self.ui.slowButton.setEnabled(True)  
+        self.ui.fastButton.setEnabled(True)             
+
 
     def initializeAutomatom(self):
         self.scene = Scene()

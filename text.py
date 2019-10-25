@@ -33,8 +33,13 @@ class Text(QtWidgets.QGraphicsItem):
     def changeColor(self):
         self.color = QColor(90,80,20)
         
-    def activate(self):
-        self.color = QColor(90,40,55)
+    def activateSlow(self):
+        self.color = QColor(0,100,120)
         QtWidgets.QApplication.processEvents() #Para que los eventos tengan preferencia
-        #time.sleep(1)
+        time.sleep(2)
         self.color = QColor(90,80,20)
+
+    def activateFast(self):
+        self.color = QColor(0,100,120)
+        QtWidgets.QApplication.processEvents() #Para que los eventos tengan preferencia
+        self.color = QColor(90,80,20)        

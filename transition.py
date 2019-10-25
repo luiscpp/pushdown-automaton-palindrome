@@ -34,8 +34,13 @@ class Transition(QtWidgets.QGraphicsItem):
     def changeColor(self):
         self.color = QtCore.Qt.black
         
-    def activate(self):
-        self.color = QColor(90,40,55)
+    def activateSlow(self):
+        self.color = QColor(120,0,25)
         QtWidgets.QApplication.processEvents() #Para que los eventos tengan preferencia
-        #time.sleep(1)
+        time.sleep(2)
         self.color = QtCore.Qt.black     
+
+    def activateFast(self):
+        self.color = QColor(120,0,25)
+        QtWidgets.QApplication.processEvents() #Para que los eventos tengan preferencia
+        self.color = QtCore.Qt.black          

@@ -32,14 +32,15 @@ class State(QtWidgets.QGraphicsItem):
             painter.drawText(40, 55, self.name)
         self.scene().update()
         
-    def activate(self):
-        self.color = QColor(90,40,55)
+    def activateSlow(self):
+        self.color = QColor(0,80,30)
         QtWidgets.QApplication.processEvents() #Para que los eventos tengan preferencia
-        #time.sleep(1)
+        time.sleep(2)
         self.color = QColor(40,20,90)
         #QtCore.QTimer.singleShot(2000, self.changeColor)#espera 1 seg para ejecutar el metodo changeColor
-
-    def mousePressEvent(self,e):
-        self.activate()
-        
+    
+    def activateFast(self):
+        self.color = QColor(0,80,30)
+        QtWidgets.QApplication.processEvents() #Para que los eventos tengan preferencia
+        self.color = QColor(40,20,90)
         
