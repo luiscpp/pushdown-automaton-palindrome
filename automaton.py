@@ -5,6 +5,7 @@ from state import *
 from transition import *
 from text import *
 from stack import *
+import pyttsx3
 
 ACTUAL_STATE = 0
 NEXT_STATE = 1
@@ -24,9 +25,11 @@ class Automaton(QtWidgets.QWidget):
         self.states = []
         self.transitions = []
         self.stack = Stack()
+        self.startPositionCharacters = 0
         self.actualState = "p"
         self.count = 0
         self.initializeAutomatom()
+        self.breakProcess = False
 
     def getTransition(self,start,end):
         for i in range(len(self.transitions)):
@@ -98,6 +101,7 @@ class Automaton(QtWidgets.QWidget):
             item.setText(_translate("Form", e[i]))
 
     def restart(self):
+        self.breakProcess = False
         self.ui.tableWidget.setRowCount(1)
         _translate = QtCore.QCoreApplication.translate
         item = self.ui.tableWidget.item(0, 0)
@@ -110,15 +114,43 @@ class Automaton(QtWidgets.QWidget):
         self.stack = Stack()
         self.actualState = "p"
         self.count = 0
-        
+
+    def fixTextSpeak(self,pushText):
+        fixedText = pushText
+        if(len(pushText)>1 and pushText != 'lambda'):
+            fixedText = pushText[0] + " y "+pushText[1]
+        return fixedText
+
+    def speakTransition(self,read,pop,push):
+        eng = pyttsx3.init()
+        eng.setProperty('voice','spanish')
+        eng.setProperty('rate', 150)    # Speed percent (can go over 100)
+        eng.setProperty('volume', 0.9)  # Volume 0-1
+        push = self.fixTextSpeak(push)
+        eng.say("lee "+read+", desapila "+pop+" y apila "+push)
+        eng.runAndWait()   
+
+    def speakNextState(self,start,end):
+        eng = pyttsx3.init()
+        eng.setProperty('voice','spanish')
+        eng.setProperty('rate', 150)    # Speed percent (can go over 100)
+        eng.setProperty('volume', 0.9)  # Volume 0-1
+        if(start != end):
+            eng.say("pasa al siguiente estado "+end)
+        else:
+            eng.say("se mantiene en el estado "+start)       
+        eng.runAndWait()           
 
     def activateColorsSlow(self,start,end,read,pop,push):#HERE
         transition = self.getTransition(start,end)
         text = self.getText(transition.transitionsTexts,read,pop,push)
         state = self.getState(end)
         
-        text.activateSlow()
+        self.speakTransition(read,pop,push)
+        text.activateSlow()       
+
         transition.activateSlow()
+        self.speakNextState(start,end)
 
         if(self.actualState == 'p'):
             self.ui.arrowLabel.setGeometry(QtCore.QRect(146, 397, 71, 61))
@@ -131,11 +163,13 @@ class Automaton(QtWidgets.QWidget):
 
     def evaluateTransitionSlow(self,actualState,read,pop):
         row = []
+        self.breakProcess = True
         for i in range(12):
             for j in range(5):
                 row.append(self.transitionMatrix[i][j])
 
             if(row[ACTUAL_STATE] == actualState and row[READ] == read and row[POP] == pop):
+                self.breakProcess = False
                 self.count = self.count -1 
                 print("actual: ",row[ACTUAL_STATE])
                 print("siguiente: ",row[NEXT_STATE])
@@ -167,10 +201,17 @@ class Automaton(QtWidgets.QWidget):
         for i in range(len(word)):
             if(word[i] != 'a' and word[i] != 'b' and word[i] != 'c'):
                 return False
-        return True                
+        return True   
 
+    def speakNoTransitionsAvailable(self):
+        eng = pyttsx3.init()
+        eng.setProperty('voice','spanish')
+        eng.setProperty('rate', 150)    # Speed percent (can go over 100)
+        eng.setProperty('volume', 0.9)  # Volume 0-1
+        eng.say("No hay transiciones disponibles")       
+        eng.runAndWait()   
 
-    def stepByStep(self):
+    def stepByStep(self):        
         self.restart()
         self.ui.slowButton.setEnabled(False)
         self.ui.fastButton.setEnabled(False) 
@@ -186,13 +227,18 @@ class Automaton(QtWidgets.QWidget):
                 QtCore.QTimer.singleShot(3000, self.ui.resultLabel.hide)
             else:
                 self.count = len(word)
-                for i in range(len(word)):
+                i=0
+                while(i<len(word) and self.breakProcess == False):
                     top = self.stack.elements.pop()
                     print("\ntransicion:\n")
                     print("tope:",top)
                     self.stack.elements.append(top)
                     character = word[i]
                     self.evaluateTransitionSlow(self.actualState,character,top)
+                    i = i+1
+
+                if(self.breakProcess == True):
+                    self.speakNoTransitionsAvailable()
 
                 top = self.stack.elements.pop()
                 self.stack.elements.append(top)
@@ -244,12 +290,14 @@ class Automaton(QtWidgets.QWidget):
         state.activateFast()
 
     def evaluateTransitionFast(self,actualState,read,pop):
+        self.breakProcess = True
         row = []
         for i in range(12):
             for j in range(5):
                 row.append(self.transitionMatrix[i][j])
 
             if(row[ACTUAL_STATE] == actualState and row[READ] == read and row[POP] == pop):
+                self.breakProcess = False
                 self.count = self.count -1 
                 print("actual: ",row[ACTUAL_STATE])
                 print("siguiente: ",row[NEXT_STATE])
@@ -292,13 +340,15 @@ class Automaton(QtWidgets.QWidget):
                 QtCore.QTimer.singleShot(3000, self.ui.resultLabel.hide)
             else:                
                 self.count = len(word)
-                for i in range(len(word)):
+                i=0
+                while(i<len(word) and self.breakProcess == False):
                     top = self.stack.elements.pop()
                     print("\ntransicion:\n")
                     print("tope:",top)
                     self.stack.elements.append(top)
                     character = word[i]
                     self.evaluateTransitionFast(self.actualState,character,top)
+                    i = i+1
 
                 top = self.stack.elements.pop()
                 self.stack.elements.append(top)
