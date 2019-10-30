@@ -5,13 +5,16 @@ from state import *
 from transition import *
 from text import *
 from stack import *
-import pyttsx3
+from gtts import gTTS
+import os 
 
 ACTUAL_STATE = 0
 NEXT_STATE = 1
 READ = 2
 POP = 3
 PUSH = 4
+
+LANGUAGE = 'es-es'
 
 class Automaton(QtWidgets.QWidget):
     def __init__(self):
@@ -25,7 +28,6 @@ class Automaton(QtWidgets.QWidget):
         self.states = []
         self.transitions = []
         self.stack = Stack()
-        self.startPositionCharacters = 0
         self.actualState = "p"
         self.count = 0
         self.initializeAutomatom()
@@ -122,24 +124,42 @@ class Automaton(QtWidgets.QWidget):
         return fixedText
 
     def speakTransition(self,read,pop,push):
-        eng = pyttsx3.init()
-        eng.setProperty('voice','spanish')
-        eng.setProperty('rate', 150)    # Speed percent (can go over 100)
-        eng.setProperty('volume', 0.9)  # Volume 0-1
-        push = self.fixTextSpeak(push)
-        eng.say("lee "+read+", desapila "+pop+" y apila "+push)
-        eng.runAndWait()   
+        push = self.fixTextSpeak(push)           
+
+        if(push == 'lambda'):
+            myText = "lee "+read+", desapila "+pop+" y no apila nada"
+        elif(read == 'lambda'):
+            myText = "no lee nada, desapila "+pop+" y apila "+push
+        else:            
+            myText = "lee "+read+", desapila "+pop+" y apila "+push
+
+        myobj = gTTS(text=myText, lang=LANGUAGE, slow=False) 
+        myobj.save("transition.mp3") 
+        os.system("mpg321 transition.mp3")
+
+    def speakIsPalindrome(self):
+        os.system("mpg321 palindrome.mp3")
+
+    def speakNoPalindrome(self):
+        os.system("mpg321 noPalindrome.mp3")
+
+    def speakInvalidPairString(self):
+        os.system("mpg321 invalidPair.mp3")
+    
+    def speakInvalidString(self):
+        os.system("mpg321 invalidString.mp3")
 
     def speakNextState(self,start,end):
-        eng = pyttsx3.init()
-        eng.setProperty('voice','spanish')
-        eng.setProperty('rate', 150)    # Speed percent (can go over 100)
-        eng.setProperty('volume', 0.9)  # Volume 0-1
         if(start != end):
-            eng.say("pasa al siguiente estado "+end)
+            myText = "pasa al siguiente estado "+end
+            myobj = gTTS(text=myText, lang=LANGUAGE, slow=False) 
+            myobj.save("state.mp3") 
+            os.system("mpg321 state.mp3")
         else:
-            eng.say("se mantiene en el estado "+start)       
-        eng.runAndWait()           
+            myText = "se mantiene en el estado "+start
+            myobj = gTTS(text=myText, lang=LANGUAGE, slow=False) 
+            myobj.save("state.mp3") 
+            os.system("mpg321 state.mp3")       
 
     def activateColorsSlow(self,start,end,read,pop,push):#HERE
         transition = self.getTransition(start,end)
@@ -204,12 +224,7 @@ class Automaton(QtWidgets.QWidget):
         return True   
 
     def speakNoTransitionsAvailable(self):
-        eng = pyttsx3.init()
-        eng.setProperty('voice','spanish')
-        eng.setProperty('rate', 150)    # Speed percent (can go over 100)
-        eng.setProperty('volume', 0.9)  # Volume 0-1
-        eng.say("No hay transiciones disponibles")       
-        eng.runAndWait()   
+        os.system("mpg321 noTransitionsAvailable.mp3")
 
     def stepByStep(self):        
         self.restart()
@@ -224,6 +239,7 @@ class Automaton(QtWidgets.QWidget):
                 self.ui.resultLabel.setStyleSheet("border:1px solid;font-size:25px;font-style:italic;color:black;background-color:rgb(120,0,0);border-top-right-radius:20px;border-bottom-left-radius:20px;border-top-left-radius:4px;border-bottom-right-radius:4px;")        
                 self.ui.resultLabel.setText("Cadena par")
                 self.ui.resultLabel.setVisible(True)
+                self.speakInvalidPairString()
                 QtCore.QTimer.singleShot(3000, self.ui.resultLabel.hide)
             else:
                 self.count = len(word)
@@ -251,22 +267,26 @@ class Automaton(QtWidgets.QWidget):
                         self.ui.resultLabel.setStyleSheet("border:1px solid;font-size:25px;font-style:italic;color:black;background-color:rgb(0,80,30);border-top-right-radius:20px;border-bottom-left-radius:20px;border-top-left-radius:4px;border-bottom-right-radius:4px;")        
                         self.ui.resultLabel.setText("Palindroma")
                         self.ui.resultLabel.setVisible(True)
-                        QtCore.QTimer.singleShot(3000, self.ui.resultLabel.hide)
+                        self.speakIsPalindrome()
+                        QtCore.QTimer.singleShot(3000, self.ui.resultLabel.hide)                        
                         print("ES PALINDROMA")
                     else:
                         self.ui.resultLabel.setStyleSheet("border:1px solid;font-size:25px;font-style:italic;color:black;background-color:rgb(120,0,0);border-top-right-radius:20px;border-bottom-left-radius:20px;border-top-left-radius:4px;border-bottom-right-radius:4px;")        
                         self.ui.resultLabel.setText("No Palindroma")
                         self.ui.resultLabel.setVisible(True)
+                        self.speakNoPalindrome()
                         QtCore.QTimer.singleShot(3000, self.ui.resultLabel.hide)
                 else:  
                     self.ui.resultLabel.setStyleSheet("border:1px solid;font-size:25px;font-style:italic;color:black;background-color:rgb(120,0,0);border-top-right-radius:20px;border-bottom-left-radius:20px;border-top-left-radius:4px;border-bottom-right-radius:4px;")        
                     self.ui.resultLabel.setText("No Palindroma")
                     self.ui.resultLabel.setVisible(True)
+                    self.speakNoPalindrome()
                     QtCore.QTimer.singleShot(3000, self.ui.resultLabel.hide)
         else:
             self.ui.resultLabel.setStyleSheet("border:1px solid;font-size:25px;font-style:italic;color:black;background-color:rgb(120,0,0);border-top-right-radius:20px;border-bottom-left-radius:20px;border-top-left-radius:4px;border-bottom-right-radius:4px;")        
             self.ui.resultLabel.setText("Invalido")
             self.ui.resultLabel.setVisible(True)
+            self.speakInvalidString()
             QtCore.QTimer.singleShot(3000, self.ui.resultLabel.hide)
         self.ui.slowButton.setEnabled(True) 
         self.ui.fastButton.setEnabled(True) 
@@ -568,5 +588,3 @@ if __name__ == "__main__":
     widget.printMatrix()
     widget.show()
     sys.exit(app.exec_())
-    #time.sleep(5)
-    

@@ -36,7 +36,7 @@ class Text(QtWidgets.QGraphicsItem):
     def activateSlow(self):
         self.color = QColor(0,100,120)
         QtWidgets.QApplication.processEvents() #Para que los eventos tengan preferencia
-        time.sleep(2)
+        time.sleep(1)
         self.color = QColor(90,80,20)
 
     def activateFast(self):

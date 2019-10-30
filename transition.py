@@ -9,7 +9,7 @@ class Transition(QtWidgets.QGraphicsItem):
         self.start = start
         self.end = end
         self.arc = False
-        self.color = QtCore.Qt.black
+        self.color = QColor(0,0,0)
         #self.setFlags(QtWidgets.QGraphicsItem.ItemIsMovable)
 
     def boundingRect(self):
@@ -37,8 +37,8 @@ class Transition(QtWidgets.QGraphicsItem):
     def activateSlow(self):
         self.color = QColor(120,0,25)
         QtWidgets.QApplication.processEvents() #Para que los eventos tengan preferencia
-        time.sleep(2)
-        self.color = QtCore.Qt.black     
+        time.sleep(0.5)
+        self.color = QtCore.Qt.black
 
     def activateFast(self):
         self.color = QColor(120,0,25)

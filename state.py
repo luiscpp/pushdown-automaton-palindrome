@@ -35,7 +35,7 @@ class State(QtWidgets.QGraphicsItem):
     def activateSlow(self):
         self.color = QColor(0,80,30)
         QtWidgets.QApplication.processEvents() #Para que los eventos tengan preferencia
-        time.sleep(2)
+        time.sleep(0.5)
         self.color = QColor(40,20,90)
         #QtCore.QTimer.singleShot(2000, self.changeColor)#espera 1 seg para ejecutar el metodo changeColor
     
