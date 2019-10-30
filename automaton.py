@@ -78,7 +78,7 @@ class Automaton(QtWidgets.QWidget):
             e.append(self.ui.tableWidget.item(i, 0).text())
 
         for i in range(rows):
-            item = self.ui.tableWidget.item(i, 0) 
+            item = self.ui.tableWidget.item(i, 0)
             font = QtGui.QFont()
             font.setPointSize(23)
             item.setFont(font) 
@@ -103,6 +103,7 @@ class Automaton(QtWidgets.QWidget):
             item.setText(_translate("Form", e[i]))
 
     def restart(self):
+        self.ui.restartLabelCharacters()
         self.breakProcess = False
         self.ui.tableWidget.setRowCount(1)
         _translate = QtCore.QCoreApplication.translate
@@ -134,32 +135,35 @@ class Automaton(QtWidgets.QWidget):
             myText = "lee "+read+", desapila "+pop+" y apila "+push
 
         myobj = gTTS(text=myText, lang=LANGUAGE, slow=False) 
-        myobj.save("transition.mp3") 
-        os.system("mpg321 transition.mp3")
+        myobj.save("sounds/transition.mp3") 
+        os.system("mpg321 sounds/transition.mp3")
 
     def speakIsPalindrome(self):
-        os.system("mpg321 palindrome.mp3")
+        os.system("mpg321 sounds/palindrome.mp3")
 
     def speakNoPalindrome(self):
-        os.system("mpg321 noPalindrome.mp3")
+        os.system("mpg321 sounds/noPalindrome.mp3")
 
     def speakInvalidPairString(self):
-        os.system("mpg321 invalidPair.mp3")
+        os.system("mpg321 sounds/invalidPair.mp3")
     
     def speakInvalidString(self):
-        os.system("mpg321 invalidString.mp3")
+        os.system("mpg321 sounds/invalidString.mp3")
+
+    def speakNoTransitionsAvailable(self):
+        os.system("mpg321 sounds/noTransitionsAvailable.mp3")
 
     def speakNextState(self,start,end):
         if(start != end):
             myText = "pasa al siguiente estado "+end
             myobj = gTTS(text=myText, lang=LANGUAGE, slow=False) 
-            myobj.save("state.mp3") 
-            os.system("mpg321 state.mp3")
+            myobj.save("sounds/state.mp3") 
+            os.system("mpg321 sounds/state.mp3")
         else:
             myText = "se mantiene en el estado "+start
             myobj = gTTS(text=myText, lang=LANGUAGE, slow=False) 
-            myobj.save("state.mp3") 
-            os.system("mpg321 state.mp3")       
+            myobj.save("sounds/state.mp3") 
+            os.system("mpg321 sounds/state.mp3")       
 
     def activateColorsSlow(self,start,end,read,pop,push):#HERE
         transition = self.getTransition(start,end)
@@ -223,16 +227,25 @@ class Automaton(QtWidgets.QWidget):
                 return False
         return True   
 
-    def speakNoTransitionsAvailable(self):
-        os.system("mpg321 noTransitionsAvailable.mp3")
+    def insertCharactersLabel(self,word):
+        if(len(word) <= 35):
+            for i in range(len(word)):
+                self.ui.listCharactersLabel[i].setText(word[i])
+                QtWidgets.QApplication.processEvents()
 
-    def stepByStep(self):        
+    def selectCharacterLabel(self,index,word):
+        if(len(word) <= 35):
+            self.ui.listCharactersLabel[index].setStyleSheet("border:1px solid;font-size:50px;color:black;background-color:rgba(0,100,0,150);")
+            QtWidgets.QApplication.processEvents()
+
+
+    def stepByStep(self):  
         self.restart()
         self.ui.slowButton.setEnabled(False)
-        self.ui.fastButton.setEnabled(False) 
+        self.ui.fastButton.setEnabled(False)
 
         word = self.ui.input.toPlainText()
-        word = word.lower() #Para aceptar entradas en mayusculas
+        word = word.lower() #Para aceptar entradas en mayusculas        
 
         if(self.isValidateString(word)):
             if((len(word) % 2) == 0):
@@ -242,9 +255,12 @@ class Automaton(QtWidgets.QWidget):
                 self.speakInvalidPairString()
                 QtCore.QTimer.singleShot(3000, self.ui.resultLabel.hide)
             else:
+                self.insertCharactersLabel(word)
+                #time.sleep(4)
                 self.count = len(word)
                 i=0
                 while(i<len(word) and self.breakProcess == False):
+                    self.selectCharacterLabel(i,word)
                     top = self.stack.elements.pop()
                     print("\ntransicion:\n")
                     print("tope:",top)
@@ -252,6 +268,10 @@ class Automaton(QtWidgets.QWidget):
                     character = word[i]
                     self.evaluateTransitionSlow(self.actualState,character,top)
                     i = i+1
+
+                if(self.breakProcess == True and len(word) <= 35):
+                    self.ui.listCharactersLabel[i-1].setStyleSheet("border:1px solid;font-size:50px;color:black;background-color:rgba(100,0,0,150);")
+                    QtWidgets.QApplication.processEvents()
 
                 if(self.breakProcess == True):
                     self.speakNoTransitionsAvailable()
@@ -358,10 +378,12 @@ class Automaton(QtWidgets.QWidget):
                 self.ui.resultLabel.setText("Cadena par")
                 self.ui.resultLabel.setVisible(True)
                 QtCore.QTimer.singleShot(3000, self.ui.resultLabel.hide)
-            else:                
+            else:    
+                self.insertCharactersLabel(word)            
                 self.count = len(word)
                 i=0
                 while(i<len(word) and self.breakProcess == False):
+                    self.selectCharacterLabel(i,word)
                     top = self.stack.elements.pop()
                     print("\ntransicion:\n")
                     print("tope:",top)
@@ -369,6 +391,10 @@ class Automaton(QtWidgets.QWidget):
                     character = word[i]
                     self.evaluateTransitionFast(self.actualState,character,top)
                     i = i+1
+
+                if(self.breakProcess == True and len(word) <= 35):
+                    self.ui.listCharactersLabel[i-1].setStyleSheet("border:1px solid;font-size:50px;color:black;background-color:rgba(100,0,0,150);")
+                    QtWidgets.QApplication.processEvents()
 
                 top = self.stack.elements.pop()
                 self.stack.elements.append(top)

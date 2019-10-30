@@ -9,25 +9,29 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 class Ui_Widget(object):
+
     def setupUi(self, Widget):
         Widget.setObjectName("Widget")
         Widget.resize(1200, 700)
         Widget.setMinimumSize(QtCore.QSize(1200, 700))
         Widget.setMaximumSize(QtCore.QSize(1200, 700))
+        self.listCharactersLabel = []
         self.graphicsView = QtWidgets.QGraphicsView(Widget)
         self.graphicsView.setGeometry(QtCore.QRect(0, 0, 1000, 700))
         self.graphicsView.setObjectName("graphicsView")
 
         self.label = QtWidgets.QLabel(Widget)
         self.label.setText("Pila")
+        self.label.setAlignment(QtCore.Qt.AlignCenter)
         self.label.setGeometry(QtCore.QRect(1060, 647, 80, 30))
-        self.label.setStyleSheet("border:1px solid;font-size:30px;font-style:italic;color:black;background-color:rgb(90,80,20);border-top-right-radius:20px;border-bottom-left-radius:20px;border-top-left-radius:4px;border-bottom-right-radius:4px;padding-left:9px;")
+        self.label.setStyleSheet("border:1px solid;font-size:30px;font-style:italic;color:black;background-color:rgb(90,80,20);border-top-right-radius:20px;border-bottom-left-radius:20px;border-top-left-radius:4px;border-bottom-right-radius:4px;")
 
 
         self.label = QtWidgets.QLabel(Widget)
         self.label.setText("Entrada")
+        self.label.setAlignment(QtCore.Qt.AlignCenter)
         self.label.setGeometry(QtCore.QRect(1046, 114, 110, 30))
-        self.label.setStyleSheet("border:1px solid;font-size:25px;font-style:italic;color:black;background-color:rgb(90,80,20);border-top-right-radius:20px;border-bottom-left-radius:20px;border-top-left-radius:4px;border-bottom-right-radius:4px;padding-left:6px;")
+        self.label.setStyleSheet("border:1px solid;font-size:25px;font-style:italic;color:black;background-color:rgb(90,80,20);border-top-right-radius:20px;border-bottom-left-radius:20px;border-top-left-radius:4px;border-bottom-right-radius:4px;")
 
         self.resultLabel = QtWidgets.QLabel(Widget)
         self.resultLabel.setVisible(False)
@@ -36,6 +40,19 @@ class Ui_Widget(object):
         self.resultLabel.setGeometry(QtCore.QRect(1005, 340, 190, 30))
         self.resultLabel.setStyleSheet("border:1px solid;font-size:25px;font-style:italic;color:black;background-color:rgb(90,80,20);border-top-right-radius:20px;border-bottom-left-radius:20px;border-top-left-radius:4px;border-bottom-right-radius:4px;")        
 
+        self.labelCharacters = QtWidgets.QLabel(Widget)#RECTANGULO DE LA BARRA DE PROGRESO DE LOS CARACTERES
+        self.labelCharacters.setText("")
+        self.labelCharacters.setGeometry(QtCore.QRect(20, 550, 960, 50))
+        self.labelCharacters.setStyleSheet("border:1px solid;color:black;background-color:rgb(90,80,20);border-top-right-radius:20px;border-bottom-left-radius:20px;border-top-left-radius:4px;border-bottom-right-radius:4px;")
+
+        self.label = QtWidgets.QLabel(Widget)
+        self.label.setText("Progreso")
+        self.label.setAlignment(QtCore.Qt.AlignCenter)
+        self.label.setGeometry(QtCore.QRect(430, 506, 150, 45))
+        self.label.setStyleSheet("border:1px solid;font-size:30px;font-style:italic;color:black;background-color:rgb(90,80,20);border-top-left-radius:20px;border-top-right-radius:20px;")
+
+        self.insertLabelCharacters(Widget)
+        
         self.tableWidget = QtWidgets.QTableWidget(Widget)
         self.tableWidget.setGeometry(QtCore.QRect(1045, 390, 110, 250))
         font = QtGui.QFont()
@@ -102,6 +119,22 @@ class Ui_Widget(object):
         self.tableWidget.setSortingEnabled(__sortingEnabled)
         self.slowButton.setText(_translate("Widget", "Paso a paso"))
         self.fastButton.setText(_translate("Widget", "Rápido"))
+
+    def insertLabelCharacters(self,Widget):
+        startPixel = 32
+        for i in range(35):
+            label = QtWidgets.QLabel(Widget)
+            label.setText("")
+            label.setAlignment(QtCore.Qt.AlignCenter)
+            label.setGeometry(QtCore.QRect(startPixel, 551, 26, 48))
+            label.setStyleSheet("font-size:80px;color:black;background-color:rgb(90,80,20);")
+            startPixel = startPixel + 26
+            self.listCharactersLabel.append(label)
+
+    def restartLabelCharacters(self):
+        for i in range(35):
+            self.listCharactersLabel[i].setText("")
+            self.listCharactersLabel[i].setStyleSheet("font-size:50px;color:black;background-color:rgb(90,80,20);border-top-right-radius:20px;border-bottom-left-radius:20px;border-top-left-radius:4px;border-bottom-right-radius:4px;")
 
 '''
 if __name__ == "__main__":
